@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08120f">
+<meta name="description" content="SHUFFLE — a premium snooker companion for drawing secret colours.">
+<title>SHUFFLE — Snooker Edition</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM
+   ============================================================ */
+:root{
+  --bg-deep:#050908;
+  --bg-felt-1:#0d2b22;
+  --bg-felt-2:#081914;
+  --panel:rgba(255,255,255,.05);
+  --panel-2:rgba(255,255,255,.028);
+  --panel-brd:rgba(212,175,55,.18);
+  --panel-brd-soft:rgba(255,255,255,.09);
+  --gold:#d4af37;
+  --gold-soft:#f2d98a;
+  --gold-deep:#8d6f18;
+  --ink:#eaf1ec;
+  --muted:#8ea79c;
+  --muted-dim:#5f7a6e;
+  --danger:#e2564f;
+  --ok:#37c47f;
+  --radius-lg:22px;
+  --radius:16px;
+  --radius-sm:11px;
+  --shadow-lg:0 26px 60px rgba(0,0,0,.55);
+  --shadow:0 14px 34px rgba(0,0,0,.42);
+  --ease:cubic-bezier(.22,.8,.28,1);
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html{ -webkit-text-size-adjust:100%; }
+
+body{
+  margin:0;
+  min-height:100%;
+  font-family:var(--font);
+  color:var(--ink);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  background:
+    radial-gradient(1100px 620px at 50% -12%, rgba(212,175,55,.11), transparent 62%),
+    radial-gradient(900px 620px at 50% 118%, rgba(18,128,86,.20), transparent 62%),
+    linear-gradient(165deg, #08120f 0%, #0a1c15 44%, #050b09 100%);
+  background-attachment:fixed;
+}
+
+/* subtle felt weave */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  opacity:.5;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.014) 0 2px, transparent 2px 5px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.05) 0 2px, transparent 2px 5px);
+}
+
+body.no-scroll{ overflow:hidden; }
+
+img,svg{ display:block; max-width:100%; }
+
+button,input{ font:inherit; color:inherit; }
+
+:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:3px;
+  border-radius:6px;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.shell{
+  position:relative;
+  z-index:1;
+  max-width:760px;
+  margin:0 auto;
+  padding:0 clamp(14px,4vw,26px) 54px;
+}
+
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:14px;
+  flex-wrap:wrap;
+  padding:24px 0 16px;
+}
+
+.brand{ display:flex; align-items:center; gap:13px; min-width:0; }
+
+.brand__balls{ display:flex; padding-left:5px; flex:0 0 auto; }
+.brand__balls i{
+  display:block;
+  width:13px; height:13px;
+  border-radius:50%;
+  margin-left:-5px;
+  box-shadow:
+    inset -2px -3px 5px rgba(0,0,0,.65),
+    inset 2px 2px 4px rgba(255,255,255,.4),
+    0 2px 5px rgba(0,0,0,.5);
+}
+.brand__balls i:nth-child(1){ background:radial-gradient(circle at 34% 28%, #ff9a9a, #c8202f 55%, #5c0710); }
+.brand__balls i:nth-child(2){ background:radial-gradient(circle at 34% 28%, #fff6b0, #f0c419 55%, #8a6b00); }
+.brand__balls i:nth-child(3){ background:radial-gradient(circle at 34% 28%, #9ff5c6, #0f8a4a 55%, #03361c); }
+.brand__balls i:nth-child(4){ background:radial-gradient(circle at 34% 28%, #a9d4ff, #1565c9 55%, #062a5c); }
+.brand__balls i:nth-child(5){ background:radial-gradient(circle at 34% 28%, #ffd7e5, #ef7fa5 55%, #8c2a4c); }
+.brand__balls i:nth-child(6){ background:radial-gradient(circle at 34% 28%, #8b8b8b, #1b1b1b 55%, #000); }
+
+.brand__text{ min-width:0; }
+
+.title{
+  margin:0;
+  font-size:clamp(21px,5.2vw,28px);
+  font-weight:800;
+  letter-spacing:.2em;
+  line-height:1.05;
+  background:linear-gradient(180deg,#fff8e2 0%, #d4af37 58%, #8d6f18 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.subtitle{
+  margin:3px 0 0;
+  font-size:10px;
+  font-weight:600;
+  letter-spacing:.34em;
+  text-transform:uppercase;
+  color:var(--muted-dim);
+}
+
+/* ============================================================
+   CARDS / PANELS
+   ============================================================ */
+.card{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(180deg, var(--panel), var(--panel-2));
+  border:1px solid var(--panel-brd-soft);
+  border-radius:var(--radius-lg);
+  padding:clamp(16px,3.4vw,24px);
+  box-shadow:var(--shadow);
+  margin-bottom:15px;
+}
+.card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(212,175,55,.5), transparent);
+}
+.card--gold{ border-color:var(--panel-brd); }
+
+.card__title{
+  margin:0 0 4px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--gold);
+}
+.card__hint{
+  margin:0 0 16px;
+  font-size:12.5px;
+  color:var(--muted);
+}
+
+.row{ display:flex; gap:12px; flex-wrap:wrap; }
+.row--between{ align-items:center; justify-content:space-between; }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  min-height:50px;
+  padding:13px 22px;
+  border-radius:14px;
+  border:1px solid transparent;
+  font-size:14.5px;
+  font-weight:700;
+  letter-spacing:.05em;
+  cursor:pointer;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .16s var(--ease), box-shadow .22s var(--ease),
+             background .22s var(--ease), opacity .2s var(--ease), border-color .2s var(--ease);
+}
+.btn:active:not(:disabled){ transform:translateY(1px) scale(.988); }
+.btn:disabled{ opacity:.36; cursor:not-allowed; filter:saturate(.55); }
+
+.btn--gold{
+  background:linear-gradient(180deg, var(--gold-soft) 0%, var(--gold) 48%, #a8842a 100%);
+  color:#1b1406;
+  box-shadow:0 12px 30px rgba(212,175,55,.24), inset 0 1px 0 rgba(255,255,255,.6);
+}
+.btn--gold:hover:not(:disabled){ box-shadow:0 16px 38px rgba(212,175,55,.34), inset 0 1px 0 rgba(255,255,255,.7); }
+
+.btn--ghost{
+  background:rgba(255,255,255,.055);
+  border-color:rgba(255,255,255,.13);
+  color:var(--ink);
+}
+.btn--ghost:hover:not(:disabled){ background:rgba(255,255,255,.1); }
+
+.btn--danger{
+  background:rgba(226,86,79,.12);
+  border-color:rgba(226,86,79,.4);
+  color:#ffb4b0;
+}
+.btn--danger:hover:not(:disabled){ background:rgba(226,86,79,.2); }
+
+.btn--lg{ min-height:60px; font-size:16px; padding:16px 30px; border-radius:16px; width:100%; }
+.btn--sm{ min-height:40px; font-size:12.5px; padding:9px 15px; border-radius:11px; letter-spacing:.08em; }
+
+/* button stack at bottom of game screen */
+.action-stack{ display:grid; gap:10px; margin-top:4px; }
+
+/* ============================================================
+   SETUP SCREEN
+   ============================================================ */
+.field{ margin-bottom:22px; }
+.field:last-child{ margin-bottom:0; }
+
+.field__label{
+  display:block;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:10px;
+}
+
+.stepper{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:5px;
+  border-radius:15px;
+  background:rgba(0,0,0,.32);
+  border:1px solid rgba(255,255,255,.09);
+}
+.stepper button{
+  width:46px; height:46px;
+  border-radius:11px;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.06);
+  color:var(--ink);
+  font-size:22px;
+  font-weight:600;
+  line-height:1;
+  cursor:pointer;
+  transition:background .18s var(--ease), transform .14s var(--ease);
+}
+.stepper button:hover:not(:disabled){ background:rgba(212,175,55,.2); }
+.stepper button:active:not(:disabled){ transform:scale(.94); }
+.stepper button:disabled{ opacity:.3; cursor:not-allowed; }
+.stepper output{
+  min-width:62px;
+  text-align:center;
+  font-size:24px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  color:var(--gold-soft);
+}
+
+.names{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));
+  gap:10px;
+}
+
+.name-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px 8px 10px;
+  border-radius:14px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.08);
+  transition:border-color .2s var(--ease), background .2s var(--ease);
+}
+.name-row:focus-within{
+  border-color:rgba(212,175,55,.55);
+  background:rgba(212,175,55,.06);
+}
+.name-row__dot{
+  flex:0 0 auto;
+  width:22px; height:22px;
+  border-radius:50%;
+  box-shadow:
+    inset -2px -3px 6px rgba(0,0,0,.7),
+    inset 2px 2px 5px rgba(255,255,255,.35);
+}
+.name-row input{
+  flex:1 1 auto;
+  min-width:0;
+  background:transparent;
+  border:0;
+  outline:none;
+  font-size:15px;
+  font-weight:600;
+  padding:8px 0;
+}
+.name-row input::placeholder{ color:var(--muted-dim); font-weight:500; }
+
+/* colour pool chips */
+.chips{ display:flex; flex-wrap:wrap; gap:9px; }
+
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  padding:10px 15px 10px 11px;
+  min-height:46px;
+  border-radius:999px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.09);
+  color:var(--muted);
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.04em;
+  cursor:pointer;
+  transition:all .2s var(--ease);
+  -webkit-tap-highlight-color:transparent;
+}
+.chip:hover{ border-color:rgba(255,255,255,.22); }
+.chip .chip__dot{
+  width:19px; height:19px;
+  border-radius:50%;
+  flex:0 0 auto;
+  box-shadow:
+    inset -2px -3px 5px rgba(0,0,0,.7),
+    inset 2px 2px 4px rgba(255,255,255,.4);
+  filter:grayscale(.85) brightness(.7);
+  transition:filter .2s var(--ease);
+}
+.chip.is-on{
+  color:var(--ink);
+  border-color:rgba(212,175,55,.55);
+  background:rgba(212,175,55,.1);
+  box-shadow:0 0 0 1px rgba(212,175,55,.15) inset;
+}
+.chip.is-on .chip__dot{ filter:none; }
+.chip[aria-pressed="true"]::after{
+  content:"✓";
+  font-size:12px;
+  color:var(--gold);
+  margin-left:-2px;
+}
+
+.summary{
+  margin-top:16px;
+  padding:13px 16px;
+  border-radius:14px;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.07);
+  font-size:13px;
+  color:var(--muted);
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 16px;
+}
+.summary b{ color:var(--gold-soft); font-weight:800; }
+
+.alert{
+  margin-top:14px;
+  padding:13px 16px;
+  border-radius:14px;
+  font-size:13.5px;
+  font-weight:600;
+  background:rgba(226,86,79,.12);
+  border:1px solid rgba(226,86,79,.35);
+  color:#ffbdb9;
+}
+.alert[hidden]{ display:none; }
+
+.howto{
+  margin:0;
+  padding:0;
+  list-style:none;
+  counter-reset:step;
+  display:grid;
+  gap:11px;
+}
+.howto li{
+  position:relative;
+  padding-left:40px;
+  font-size:13.5px;
+  color:var(--muted);
+}
+.howto li::before{
+  counter-increment:step;
+  content:counter(step);
+  position:absolute;
+  left:0; top:0;
+  width:26px; height:26px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:12px;
+  font-weight:800;
+  color:var(--gold);
+  background:rgba(212,175,55,.12);
+  border:1px solid rgba(212,175,55,.3);
+}
+
+/* ============================================================
+   GAME HUD
+   ============================================================ */
+.hud{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+  margin-bottom:15px;
+}
+.hud__item{
+  padding:14px 10px;
+  border-radius:var(--radius);
+  text-align:center;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.08);
+}
+.hud__label{
+  display:block;
+  font-size:9.5px;
+  font-weight:800;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--muted-dim);
+  margin-bottom:5px;
+}
+.hud__value{
+  display:block;
+  font-size:19px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  color:var(--gold-soft);
+}
+
+.status{
+  margin:0 0 15px;
+  padding:14px 17px;
+  border-radius:var(--radius);
+  font-size:13.5px;
+  line-height:1.45;
+  color:var(--muted);
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.07);
+  border-left:3px solid rgba(212,175,55,.55);
+}
+.status--done{
+  border-left-color:var(--ok);
+  color:#b9e8ce;
+}
+
+/* player selection grid */
+.players{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(146px, 1fr));
+  gap:10px;
+}
+
+.player{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  padding:16px 10px 13px;
+  min-height:112px;
+  border-radius:var(--radius);
+  background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+  border:1px solid rgba(255,255,255,.09);
+  color:var(--ink);
+  cursor:pointer;
+  text-align:center;
+  transition:transform .16s var(--ease), border-color .2s var(--ease),
+             background .2s var(--ease), box-shadow .2s var(--ease);
+  -webkit-tap-highlight-color:transparent;
+}
+.player:hover:not(:disabled){ transform:translateY(-2px); border-color:rgba(212,175,55,.45); }
+.player:active:not(:disabled){ transform:translateY(0) scale(.985); }
+.player:disabled{ cursor:not-allowed; }
+
+.player__avatar{
+  width:42px; height:42px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:17px;
+  font-weight:800;
+  color:#0f1a14;
+  background:linear-gradient(180deg, var(--gold-soft), var(--gold) 60%, #9c7a24);
+  box-shadow:inset 0 -3px 8px rgba(0,0,0,.28), 0 6px 14px rgba(0,0,0,.4);
+}
+.player__name{
+  font-size:13.5px;
+  font-weight:700;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.player__state{
+  font-size:9.5px;
+  font-weight:800;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted-dim);
+}
+
+.player--selected{
+  border-color:var(--gold);
+  background:linear-gradient(180deg, rgba(212,175,55,.2), rgba(212,175,55,.06));
+  box-shadow:0 0 0 1px rgba(212,175,55,.35), 0 14px 30px rgba(0,0,0,.4);
+}
+.player--selected .player__avatar{
+  background:linear-gradient(180deg, #fff, #d9f0e4 60%, #9fbfae);
+}
+
+.player--done{
+  opacity:.62;
+  background:linear-gradient(180deg, rgba(55,196,127,.1), rgba(55,196,127,.03));
+  border-color:rgba(55,196,127,.3);
+}
+.player--done .player__avatar{
+  background:linear-gradient(180deg, #8ff0bd, #37c47f 60%, #17724a);
+  color:#04281a;
+}
+.player--done .player__state{ color:var(--ok); }
+
+/* confirm block */
+.confirm{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  padding:15px 16px;
+  border-radius:14px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.09);
+  cursor:pointer;
+  margin:14px 0 18px;
+  transition:border-color .2s var(--ease), background .2s var(--ease);
+}
+.confirm:hover{ border-color:rgba(212,175,55,.45); }
+.confirm input{
+  appearance:none;
+  -webkit-appearance:none;
+  flex:0 0 auto;
+  width:24px; height:24px;
+  margin:1px 0 0;
+  border-radius:7px;
+  border:1.5px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.05);
+  cursor:pointer;
+  position:relative;
+  transition:all .18s var(--ease);
+}
+.confirm input:checked{
+  background:linear-gradient(180deg, var(--gold-soft), var(--gold));
+  border-color:var(--gold);
+}
+.confirm input:checked::after{
+  content:"";
+  position:absolute;
+  left:8px; top:4px;
+  width:6px; height:11px;
+  border:solid #1b1406;
+  border-width:0 2.5px 2.5px 0;
+  transform:rotate(42deg);
+}
+.confirm span{ font-size:13.5px; color:var(--muted); line-height:1.45; }
+.confirm b{ color:var(--ink); }
+
+.privacy{
+  margin-top:14px;
+  font-size:11.5px;
+  line-height:1.5;
+  color:var(--muted-dim);
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+}
+.privacy svg{ flex:0 0 auto; margin-top:1px; }
+
+/* ============================================================
+   REVEAL OVERLAY
+   ============================================================ */
+.reveal{
+  position:fixed;
+  inset:0;
+  z-index:120;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(16,48,38,.97) 0%, rgba(3,8,6,.995) 68%);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  animation:fadeIn .28s var(--ease) both;
+  overflow-y:auto;
+}
+.reveal[hidden]{ display:none; }
+
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+
+.reveal__inner{
+  width:100%;
+  max-width:440px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  padding:8px 0 12px;
+}
+
+.reveal__eyebrow{
+  margin:0 0 22px;
+  font-size:10.5px;
+  font-weight:800;
+  letter-spacing:.3em;
+  text-transform:uppercase;
+  color:var(--gold);
+  min-height:1em;
+}
+
+.reveal__shuffle{
+  margin:26px 0 0;
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--muted);
+  animation:pulseDim 1.1s ease-in-out infinite;
+}
+.reveal__shuffle[hidden]{ display:none; }
+
+@keyframes pulseDim{ 0%,100%{opacity:.45} 50%{opacity:1} }
+
+.reveal__name{
+  margin:22px 0 0;
+  font-size:clamp(32px, 11vw, 58px);
+  font-weight:800;
+  letter-spacing:.16em;
+  line-height:1.05;
+  min-height:1.05em;
+  opacity:0;
+  transform:translateY(14px);
+  transition:opacity .4s var(--ease), transform .45s var(--ease);
+  word-break:break-word;
+}
+.reveal__name.is-shown{ opacity:1; transform:none; }
+
+.reveal__note{
+  margin:20px 0 0;
+  max-width:330px;
+  font-size:12.5px;
+  line-height:1.6;
+  color:var(--muted);
+}
+.reveal__note[hidden]{ display:none; }
+
+.reveal .btn--lg{ margin-top:30px; max-width:340px; }
+.reveal .btn[hidden]{ display:none; }
+
+/* ============================================================
+   THE BALL
+   ============================================================ */
+.ball{
+  --c:#2a7a55;
+  --c-light:#7ff0b0;
+  --c-dark:#062a1a;
+  --glow:rgba(42,122,85,.55);
+  --ball-size:200px;
+  position:relative;
+  width:var(--ball-size);
+  height:var(--ball-size);
+  border-radius:50%;
+  flex:0 0 auto;
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255,255,255,.95) 0%, rgba(255,255,255,.32) 6%, rgba(255,255,255,0) 27%),
+    radial-gradient(circle at 69% 77%, rgba(0,0,0,.58) 0%, rgba(0,0,0,0) 56%),
+    radial-gradient(circle at 50% 44%, var(--c-light) 0%, var(--c) 46%, var(--c-dark) 100%);
+  box-shadow:
+    inset -10px -16px 34px rgba(0,0,0,.55),
+    inset 9px 11px 26px rgba(255,255,255,.10),
+    0 26px 54px rgba(0,0,0,.62),
+    0 0 72px var(--glow);
+  transition:box-shadow .4s var(--ease);
+}
+.ball::after{
+  content:"";
+  position:absolute;
+  left:19%; top:12%;
+  width:27%; height:20%;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,.92), rgba(255,255,255,0) 72%);
+  filter:blur(2px);
+  pointer-events:none;
+}
+
+.ball.is-shuffling{ animation:wobble .55s ease-in-out infinite; }
+@keyframes wobble{
+  0%,100%{ transform:translateY(0) scale(1); }
+  50%{ transform:translateY(-12px) scale(1.035); }
+}
+
+.ball.is-revealed{ animation:pop .78s cubic-bezier(.2,.9,.25,1.25) both; }
+@keyframes pop{
+  0%{ transform:scale(.34) rotate(-28deg); opacity:0; }
+  62%{ transform:scale(1.09) rotate(5deg); opacity:1; }
+  100%{ transform:scale(1) rotate(0deg); opacity:1; }
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:150;
+  display:grid;
+  place-items:center;
+  padding:22px;
+  background:rgba(2,5,4,.78);
+  -webkit-backdrop-filter:blur(7px);
+  backdrop-filter:blur(7px);
+  animation:fadeIn .2s var(--ease) both;
+}
+.modal[hidden]{ display:none; }
+
+.modal__card{
+  width:100%;
+  max-width:400px;
+  padding:26px 24px 22px;
+  border-radius:var(--radius-lg);
+  background:linear-gradient(180deg, #10241c, #0a1712);
+  border:1px solid var(--panel-brd);
+  box-shadow:var(--shadow-lg);
+  animation:popIn .28s var(--ease) both;
+}
+@keyframes popIn{ from{ transform:scale(.94) translateY(12px); opacity:0 } to{ transform:none; opacity:1 } }
+
+.modal__card h3{
+  margin:0 0 8px;
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.modal__card p{
+  margin:0 0 22px;
+  font-size:13.5px;
+  color:var(--muted);
+  line-height:1.55;
+}
+.modal__actions{ display:flex; gap:10px; }
+.modal__actions .btn{ flex:1 1 0; }
+
+/* ============================================================
+   HISTORY MODAL
+   ============================================================ */
+.modal__card--history{
+  max-width:460px;
+  max-height:82vh;
+  display:flex;
+  flex-direction:column;
+  padding:26px 22px 22px;
+}
+.modal__card--history h3{ margin-bottom:6px; }
+
+.modal__sub{
+  margin:0 0 16px !important;
+  font-size:12.5px !important;
+  color:var(--muted) !important;
+  line-height:1.5 !important;
+}
+
+.history__note{
+  margin:0 0 16px;
+  padding:11px 13px;
+  border-radius:11px;
+  background:rgba(212,175,55,.07);
+  border:1px solid rgba(212,175,55,.22);
+  font-size:11.5px;
+  line-height:1.5;
+  color:var(--muted);
+}
+
+.history{
+  list-style:none;
+  margin:0 0 18px;
+  padding:0 4px 0 0;
+  display:grid;
+  gap:8px;
+  overflow-y:auto;
+  flex:1 1 auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(212,175,55,.35) transparent;
+}
+.history::-webkit-scrollbar{ width:6px; }
+.history::-webkit-scrollbar-thumb{
+  background:rgba(212,175,55,.3);
+  border-radius:3px;
+}
+
+.history__item{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:10px 13px;
+  border-radius:12px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.08);
+}
+
+.history__index{
+  flex:0 0 auto;
+  width:22px; height:22px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:11px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  color:var(--gold);
+  background:rgba(212,175,55,.13);
+  border:1px solid rgba(212,175,55,.3);
+}
+
+.history__ball{
+  width:30px; height:30px;
+  border-radius:50%;
+  flex:0 0 auto;
+  box-shadow:
+    inset -3px -4px 7px rgba(0,0,0,.7),
+    inset 2px 2px 6px rgba(255,255,255,.4),
+    0 3px 8px rgba(0,0,0,.45);
+}
+
+.history__name{
+  flex:1 1 auto;
+  min-width:0;
+  font-size:13.5px;
+  font-weight:700;
+  color:var(--ink);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.history__colour{
+  flex:0 0 auto;
+  font-size:11.5px;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--gold-soft);
+  text-align:right;
+}
+.history__colour--none{ color:var(--muted-dim); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:520px){
+  .shell{ padding-bottom:40px; }
+  .topbar{ padding:18px 0 12px; }
+  .hud{ gap:8px; }
+  .hud__item{ padding:12px 6px; }
+  .hud__value{ font-size:16px; }
+  .players{ grid-template-columns:repeat(2, 1fr); }
+  .names{ grid-template-columns:1fr; }
+  .btn--lg{ min-height:56px; font-size:15px; }
+  .modal__actions{ flex-direction:column-reverse; }
+  .reveal{ padding:18px; }
+  .modal__card--history{ padding:22px 18px 18px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ================= HEADER ================= -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand__balls" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+      <div class="brand__text">
+        <h1 class="title">SHUFFLE</h1>
+        <p class="subtitle">Snooker Edition</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= SETUP SCREEN ================= -->
+  <main id="setupScreen">
+
+    <section class="card card--gold">
+      <h2 class="card__title">Table Setup</h2>
+      <p class="card__hint">Configure the frame before the first ball is potted.</p>
+
+      <div class="field">
+        <span class="field__label" id="playersLabel">Number of players</span>
+        <div class="stepper" role="group" aria-labelledby="playersLabel">
+          <button type="button" id="decPlayers" aria-label="Remove one player">−</button>
+          <output id="playerCountOut" aria-live="polite">4</output>
+          <button type="button" id="incPlayers" aria-label="Add one player">+</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field__label">Player names</span>
+        <div class="names" id="nameInputs"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Qualification</h2>
+      <p class="card__hint">
+        How many balls must a player pot before they earn the right to draw a secret colour?
+      </p>
+      <div class="field">
+        <span class="field__label" id="ballsLabel">Qualifying balls</span>
+        <div class="stepper" role="group" aria-labelledby="ballsLabel">
+          <button type="button" id="decBalls" aria-label="Fewer qualifying balls">−</button>
+          <output id="ballsOut" aria-live="polite">3</output>
+          <button type="button" id="incBalls" aria-label="More qualifying balls">+</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Colour Pool</h2>
+      <p class="card__hint">
+        Each colour can be drawn only once per session. Tap a colour to remove it from the deck.
+      </p>
+      <div class="chips" id="poolChips" role="group" aria-label="Available colours"></div>
+
+      <div class="summary" id="setupSummary"></div>
+      <div class="alert" id="setupAlert" role="alert" hidden></div>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">How It Works</h2>
+      <ol class="howto">
+        <li>Pot your qualifying balls on the real table, then select your name here.</li>
+        <li>Confirm that you have qualified — this unlocks your private draw.</li>
+        <li>Tap <strong>Draw My Colour</strong> and memorise the colour shown on screen.</li>
+        <li>Tap <strong>Hide My Colour</strong> and pass the device to the next player.</li>
+        <li>When everyone has drawn, tap <strong>Mark Game Complete</strong>, then <strong>View Game History</strong> to settle the frame.</li>
+      </ol>
+    </section>
+
+    <button class="btn btn--gold btn--lg" id="startBtn" type="button">Start Game</button>
+
+    <p class="privacy">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <span>
+        Pass-the-device privacy: colours are never listed publicly, never mapped to names on screen,
+        and are cleared the moment you hide them. For a stronger security boundary, use one device per player.
+      </span>
+    </p>
+  </main>
+
+  <!-- ================= GAME SCREEN ================= -->
+  <main id="gameScreen" hidden>
+
+    <div class="hud">
+      <div class="hud__item">
+        <span class="hud__label">Players Drawn</span>
+        <span class="hud__value" id="hudPlayers">0 / 0</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Colours Left</span>
+        <span class="hud__value" id="hudColours">0</span>
+      </div>
+      <div class="hud__item">
+        <span class="hud__label">Target</span>
+        <span class="hud__value" id="hudTarget">3</span>
+      </div>
+    </div>
+
+    <p class="status" id="statusLine" aria-live="polite"></p>
+
+    <section class="card card--gold">
+      <h2 class="card__title">Step 1 · Select Your Name</h2>
+      <p class="card__hint">Only players who have qualified should tap their name.</p>
+      <div class="players" id="playerGrid"></div>
+    </section>
+
+    <section class="card" id="confirmPanel" hidden>
+      <h2 class="card__title">Step 2 · Confirm Qualification</h2>
+      <p class="card__hint">
+        <b id="confirmName">—</b>, confirm you have potted <b id="confirmBalls">3 balls</b>.
+      </p>
+
+      <label class="confirm" for="confirmCheck">
+        <input type="checkbox" id="confirmCheck">
+        <span>
+          I am <b id="confirmName2">this player</b> and I have qualified. I understand the next screen
+          is private and I will hide it before passing the device.
+        </span>
+      </label>
+
+      <button class="btn btn--gold btn--lg" id="drawBtn" type="button" disabled>Draw My Colour</button>
+
+      <p class="privacy">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>Your colour is shown only once, only to you. Nothing on this screen reveals another player's colour.</span>
+      </p>
+    </section>
+
+    <div class="action-stack">
+      <button class="btn btn--gold btn--lg" id="completeBtn" type="button" disabled
+              aria-label="Mark game complete — available after all players have drawn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+        <span id="completeBtnLabel">Mark Game Complete</span>
+      </button>
+
+      <button class="btn btn--ghost btn--lg" id="historyBtn" type="button" disabled
+              aria-label="Game history — available after the game is marked complete">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 7v5l3.5 2"></path>
+        </svg>
+        View Game History
+      </button>
+
+      <button class="btn btn--danger btn--lg" id="resetBtn" type="button">Reset Game</button>
+    </div>
+  </main>
+</div>
+
+<!-- ================= PRIVATE REVEAL OVERLAY ================= -->
+<div class="reveal" id="overlay" hidden role="dialog" aria-modal="true" aria-label="Your secret colour" tabindex="-1">
+  <div class="reveal__inner">
+    <p class="reveal__eyebrow" id="revealPlayer"></p>
+
+    <div class="ball" id="revealBall" aria-hidden="true"></div>
+
+    <p class="reveal__shuffle" id="revealShuffle">Shuffling the colours…</p>
+    <h2 class="reveal__name" id="revealName"></h2>
+
+    <p class="reveal__note" id="revealNote" hidden>
+      Memorise your colour. Do not show this screen to anyone — then hide it before passing the device on.
+    </p>
+
+    <button class="btn btn--gold btn--lg" id="hideBtn" type="button" hidden>Hide My Colour</button>
+  </div>
+</div>
+
+<!-- ================= RESET MODAL ================= -->
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal__card">
+    <h3 id="modalTitle">Start a new game?</h3>
+    <p>
+      All players, progress, history and secret colours will be cleared, and the full colour pool
+      will be restored. This cannot be undone.
+    </p>
+    <div class="modal__actions">
+      <button class="btn btn--ghost" id="modalCancel" type="button">Cancel</button>
+      <button class="btn btn--gold" id="modalConfirm" type="button">Reset Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= COMPLETE GAME MODAL ================= -->
+<div class="modal" id="completeModal" hidden role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+  <div class="modal__card">
+    <h3 id="completeTitle">Mark this frame as complete?</h3>
+    <p>
+      Confirm that every qualified player has finished drawing. This locks the frame and unlocks
+      <strong>Game History</strong> so the table can verify each colour assignment.
+    </p>
+    <div class="modal__actions">
+      <button class="btn btn--ghost" id="completeCancel" type="button">Cancel</button>
+      <button class="btn btn--gold" id="completeConfirm" type="button">Yes, Complete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= GAME HISTORY MODAL ================= -->
+<div class="modal" id="historyModal" hidden role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+  <div class="modal__card modal__card--history">
+    <h3 id="historyTitle">Game History</h3>
+    <p class="modal__sub" id="historySub">Complete colour assignment for this frame.</p>
+
+    <div class="history__note">
+      Frame verified. Use this list to confirm who held which colour.
+    </div>
+
+    <ul class="history" id="historyList" aria-label="Player colour assignments"></ul>
+
+    <div class="modal__actions">
+      <button class="btn btn--gold" id="historyClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     1. COLOUR DEFINITIONS
+     ============================================================ */
+  const COLOURS = [
+    { key:"red",    name:"Red",    hex:"#c8202f", light:"#ff8a8a", dark:"#5c0710", glow:"rgba(200,32,47,.85)"  },
+    { key:"yellow", name:"Yellow", hex:"#f0c419", light:"#fff6b0", dark:"#8a6b00", glow:"rgba(240,196,25,.85)" },
+    { key:"green",  name:"Green",  hex:"#0f8a4a", light:"#9ff5c6", dark:"#03361c", glow:"rgba(15,138,74,.85)"  },
+    { key:"brown",  name:"Brown",  hex:"#8a5a2b", light:"#e8b478", dark:"#3a220c", glow:"rgba(138,90,43,.85)"  },
+    { key:"blue",   name:"Blue",   hex:"#1565c9", light:"#a9d4ff", dark:"#062a5c", glow:"rgba(21,101,201,.9)"  },
+    { key:"pink",   name:"Pink",   hex:"#ef7fa5", light:"#ffd7e5", dark:"#8c2a4c", glow:"rgba(239,127,165,.9)" },
+    { key:"black",  name:"Black",  hex:"#1b1b1b", light:"#8b8b8b", dark:"#000000", glow:"rgba(255,255,255,.35)"}
+  ];
+
+  const COLOUR_MAP = COLOURS.reduce(function (acc, c) { acc[c.key] = c; return acc; }, {});
+
+  /* Neutral ball appearance used when no colour is on screen. */
+  const NEUTRAL_COLOUR = {
+    hex:"#1d3a2e", light:"#3f7a5f", dark:"#07130e", glow:"rgba(30,90,66,.45)"
+  };
+
+  const MIN_PLAYERS = 2;
+  const MAX_PLAYERS = 12;
+  const MIN_BALLS   = 1;
+  const MAX_BALLS   = 15;
+
+  /* ============================================================
+     2. SECURE RANDOM
+     ============================================================ */
+  function secureRandomInt(max) {
+    if (!Number.isFinite(max) || max <= 1) return 0;
+
+    const cryptoObj = window.crypto || window.msCrypto;
+    if (cryptoObj && typeof cryptoObj.getRandomValues === "function") {
+      const RANGE = 0x100000000;
+      const limit = RANGE - (RANGE % max);
+      const buffer = new Uint32Array(1);
+      let value;
+      do {
+        cryptoObj.getRandomValues(buffer);
+        value = buffer[0];
+      } while (value >= limit);
+      return value % max;
+    }
+    return Math.floor(Math.random() * max);
+  }
+
+  /* ============================================================
+     3. STATE
+     ============================================================ */
+  const state = {
+    /* setup */
+    setupCount: 4,
+    requiredBalls: 3,
+    chosenColours: new Set(COLOURS.map(function (c) { return c.key; })),
+
+    /* game */
+    players: [],            // [{ id, name, hasDrawn }]
+    pool: [],               // remaining colour keys
+    selectedId: null,
+    confirmed: false,
+    drawnCount: 0,
+    drawOrder: [],          // [{ playerId, colourKey }] in draw sequence
+    gameCompleted: false,   // true once the host explicitly locks the frame
+
+    /* transient */
+    drawing: false,
+    activeReveal: null,
+    revealToken: 0
+  };
+
+  /**
+   * Secret assignment map. Held outside `state`, never rendered during play,
+   * and only read when the Game History panel is explicitly opened after the
+   * frame has been marked complete.
+   */
+  const secretAssignments = new Map();
+
+  /* ============================================================
+     4. DOM REFERENCES
+     ============================================================ */
+  const $ = function (id) { return document.getElementById(id); };
+
+  const setupScreen   = $("setupScreen");
+  const gameScreen    = $("gameScreen");
+
+  const decPlayers    = $("decPlayers");
+  const incPlayers    = $("incPlayers");
+  const playerCountOut= $("playerCountOut");
+  const nameInputs    = $("nameInputs");
+
+  const decBalls      = $("decBalls");
+  const incBalls      = $("incBalls");
+  const ballsOut      = $("ballsOut");
+
+  const poolChips     = $("poolChips");
+  const setupSummary  = $("setupSummary");
+  const setupAlert    = $("setupAlert");
+  const startBtn      = $("startBtn");
+
+  const hudPlayers    = $("hudPlayers");
+  const hudColours    = $("hudColours");
+  const hudTarget     = $("hudTarget");
+  const statusLine    = $("statusLine");
+
+  const playerGrid    = $("playerGrid");
+  const confirmPanel  = $("confirmPanel");
+  const confirmName   = $("confirmName");
+  const confirmName2  = $("confirmName2");
+  const confirmBalls  = $("confirmBalls");
+  const confirmCheck  = $("confirmCheck");
+  const drawBtn       = $("drawBtn");
+
+  const completeBtn      = $("completeBtn");
+  const completeBtnLabel = $("completeBtnLabel");
+  const historyBtn    = $("historyBtn");
+  const resetBtn      = $("resetBtn");
+
+  const overlay       = $("overlay");
+  const revealPlayer  = $("revealPlayer");
+  const revealBall    = $("revealBall");
+  const revealShuffle = $("revealShuffle");
+  const revealName    = $("revealName");
+  const revealNote    = $("revealNote");
+  const hideBtn       = $("hideBtn");
+
+  const modal         = $("modal");
+  const modalCancel   = $("modalCancel");
+  const modalConfirm  = $("modalConfirm");
+
+  const completeModal   = $("completeModal");
+  const completeCancel  = $("completeCancel");
+  const completeConfirm = $("completeConfirm");
+
+  const historyModal  = $("historyModal");
+  const historySub    = $("historySub");
+  const historyList   = $("historyList");
+  const historyClose  = $("historyClose");
+
+  /* ============================================================
+     5. HELPERS
+     ============================================================ */
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (ch) {
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch];
+    });
+  }
+
+  function paintBall(el, colour) {
+    el.style.setProperty("--c", colour.hex);
+    el.style.setProperty("--c-light", colour.light);
+    el.style.setProperty("--c-dark", colour.dark);
+    el.style.setProperty("--glow", colour.glow);
+  }
+
+  function clearBall(el) {
+    el.classList.remove("is-shuffling", "is-revealed");
+    paintBall(el, NEUTRAL_COLOUR);
+  }
+
+  function ballGradient(colour) {
+    return "radial-gradient(circle at 34% 28%, " +
+      colour.light + ", " + colour.hex + " 55%, " + colour.dark + ")";
+  }
+
+  /**
+   * True when no further draws are possible: every player has drawn,
+   * or the colour pool has run dry.
+   */
+  function isFrameReadyToComplete() {
+    return state.players.length > 0 &&
+           (state.drawnCount >= state.players.length || state.pool.length === 0);
+  }
+
+  /* ============================================================
+     6. SETUP SCREEN
+     ============================================================ */
+  function buildNameInputs() {
+    const previous = Array.prototype.map.call(
+      nameInputs.querySelectorAll("input"),
+      function (input) { return input.value; }
+    );
+
+    nameInputs.innerHTML = "";
+
+    for (let i = 0; i < state.setupCount; i++) {
+      const fallback = "Player " + (i + 1);
+      const value = (previous[i] !== undefined && previous[i] !== "") ? previous[i] : fallback;
+
+      const row = document.createElement("div");
+      row.className = "name-row";
+
+      const dot = document.createElement("span");
+      dot.className = "name-row__dot";
+      const tone = COLOURS[i % COLOURS.length];
+      dot.style.background = ballGradient(tone);
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = value;
+      input.maxLength = 14;
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.setAttribute("aria-label", "Name for player " + (i + 1));
+
+      input.addEventListener("input", function () {
+        hideSetupAlert();
+        updateSetupSummary();
+      });
+
+      row.appendChild(dot);
+      row.appendChild(input);
+      nameInputs.appendChild(row);
+    }
+  }
+
+  function buildPoolChips() {
+    COLOURS.forEach(function (colour) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip is-on";
+      chip.dataset.key = colour.key;
+      chip.setAttribute("aria-pressed", "true");
+      chip.setAttribute("aria-label", colour.name + " — included in the pool");
+
+      const dot = document.createElement("span");
+      dot.className = "chip__dot";
+      dot.style.background = ballGradient(colour);
+
+      const label = document.createElement("span");
+      label.textContent = colour.name;
+
+      chip.appendChild(dot);
+      chip.appendChild(label);
+
+      chip.addEventListener("click", function () {
+        const isOn = chip.classList.toggle("is-on");
+        chip.setAttribute("aria-pressed", String(isOn));
+        chip.setAttribute("aria-label", colour.name + (isOn ? " — included in the pool" : " — removed from the pool"));
+
+        if (isOn) {
+          state.chosenColours.add(colour.key);
+        } else {
+          state.chosenColours.delete(colour.key);
+        }
+        hideSetupAlert();
+        updateSetupSummary();
+      });
+
+      poolChips.appendChild(chip);
+    });
+  }
+
+  function updateSetupSummary() {
+    const colourCount = state.chosenColours.size;
+
+    setupSummary.innerHTML =
+      "<span><b>" + state.setupCount + "</b> players</span>" +
+      "<span><b>" + colourCount + "</b> colours in pool</span>" +
+      "<span><b>" + state.requiredBalls + "</b> qualifying " +
+        (state.requiredBalls === 1 ? "ball" : "balls") + "</span>";
+
+    if (colourCount < state.setupCount) {
+      showSetupAlert(
+        "You have selected " + colourCount + " colour" + (colourCount === 1 ? "" : "s") +
+        " but there are " + state.setupCount + " players. Every player needs a unique colour — " +
+        "add " + (state.setupCount - colourCount) + " more colour" +
+        (state.setupCount - colourCount === 1 ? "" : "s") + " or reduce the player count."
+      );
+    } else if (colourCount === 0) {
+      showSetupAlert("Select at least one colour for the pool.");
+    } else {
+      hideSetupAlert();
+    }
+
+    playerCountOut.textContent = String(state.setupCount);
+    ballsOut.textContent = String(state.requiredBalls);
+    decPlayers.disabled = state.setupCount <= MIN_PLAYERS;
+    incPlayers.disabled = state.setupCount >= MAX_PLAYERS;
+    decBalls.disabled   = state.requiredBalls <= MIN_BALLS;
+    incBalls.disabled   = state.requiredBalls >= MAX_BALLS;
+  }
+
+  function showSetupAlert(message) {
+    setupAlert.textContent = message;
+    setupAlert.hidden = false;
+  }
+
+  function hideSetupAlert() {
+    setupAlert.hidden = true;
+    setupAlert.textContent = "";
+  }
+
+  function validateSetup() {
+    const inputs = Array.prototype.slice.call(nameInputs.querySelectorAll("input"));
+    const names = inputs.map(function (input) { return input.value.trim(); });
+
+    if (names.length < MIN_PLAYERS) {
+      return { ok: false, message: "At least " + MIN_PLAYERS + " players are required." };
+    }
+    if (names.some(function (n) { return n.length === 0; })) {
+      return { ok: false, message: "Every player needs a name before the game can start." };
+    }
+
+    const lowered = names.map(function (n) { return n.toLowerCase(); });
+    if (new Set(lowered).size !== lowered.length) {
+      return { ok: false, message: "Player names must be unique — two players share the same name." };
+    }
+
+    if (state.chosenColours.size < names.length) {
+      return {
+        ok: false,
+        message: "Not enough colours: " + names.length + " players but only " +
+                 state.chosenColours.size + " colour" + (state.chosenColours.size === 1 ? "" : "s") +
+                 " selected. Every colour can only be drawn once."
+      };
+    }
+
+    return { ok: true, names: names };
+  }
+
+  /* ============================================================
+     7. GAME LIFECYCLE
+     ============================================================ */
+  function startGame() {
+    const validation = validateSetup();
+    if (!validation.ok) {
+      showSetupAlert(validation.message);
+      setupAlert.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    state.players = validation.names.map(function (name, index) {
+      return { id: "p" + index, name: name, hasDrawn: false };
+    });
+
+    state.pool = COLOURS
+      .map(function (c) { return c.key; })
+      .filter(function (key) { return state.chosenColours.has(key); });
+
+    secretAssignments.clear();
+    state.drawOrder = [];
+    state.drawnCount = 0;
+    state.selectedId = null;
+    state.confirmed = false;
+    state.drawing = false;
+    state.activeReveal = null;
+    state.gameCompleted = false;
+    state.revealToken++;
+
+    clearBall(revealBall);
+    revealName.textContent = "";
+    revealName.classList.remove("is-shown");
+    revealName.style.textShadow = "";
+    revealName.style.color = "";
+    revealPlayer.textContent = "";
+    revealShuffle.hidden = false;
+    revealNote.hidden = true;
+    hideBtn.hidden = true;
+    overlay.hidden = true;
+
+    historyModal.hidden = true;
+    completeModal.hidden = true;
+    modal.hidden = true;
+    document.body.classList.remove("no-scroll");
+
+    setupScreen.hidden = true;
+    gameScreen.hidden = false;
+    hideSetupAlert();
+
+    renderGame();
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  }
+
+  function requestReset() {
+    if (state.activeReveal) return;
+    modal.hidden = false;
+    modalConfirm.focus();
+  }
+
+  function performReset() {
+    modal.hidden = true;
+    historyModal.hidden = true;
+    completeModal.hidden = true;
+
+    secretAssignments.clear();
+    state.players = [];
+    state.pool = [];
+    state.selectedId = null;
+    state.confirmed = false;
+    state.drawnCount = 0;
+    state.drawOrder = [];
+    state.drawing = false;
+    state.activeReveal = null;
+    state.gameCompleted = false;
+    state.revealToken++;
+
+    overlay.hidden = true;
+    document.body.classList.remove("no-scroll");
+    clearBall(revealBall);
+    revealName.textContent = "";
+    revealName.classList.remove("is-shown");
+    revealName.style.textShadow = "";
+    revealName.style.color = "";
+    revealPlayer.textContent = "";
+    revealShuffle.hidden = false;
+    revealNote.hidden = true;
+    hideBtn.hidden = true;
+
+    historyList.innerHTML = "";
+
+    confirmCheck.checked = false;
+    gameScreen.hidden = true;
+    setupScreen.hidden = false;
+
+    updateSetupSummary();
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  /* ============================================================
+     8. GAME RENDERING
+     ============================================================ */
+  function renderGame() {
+    if (gameScreen.hidden) return;
+
+    hudPlayers.textContent = state.drawnCount + " / " + state.players.length;
+    hudColours.textContent = String(state.pool.length);
+    hudTarget.textContent = String(state.requiredBalls);
+
+    renderPlayerGrid();
+    renderStatus();
+    renderConfirmPanel();
+    renderActionButtons();
+  }
+
+  function renderPlayerGrid() {
+    playerGrid.innerHTML = "";
+    const poolEmpty = state.pool.length === 0;
+
+    state.players.forEach(function (player) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "player";
+      if (player.hasDrawn) btn.classList.add("player--done");
+      if (player.id === state.selectedId) btn.classList.add("player--selected");
+
+      const isSelected = player.id === state.selectedId;
+      btn.setAttribute("aria-pressed", String(isSelected));
+
+      const blocked = player.hasDrawn || poolEmpty || !!state.activeReveal;
+      btn.disabled = blocked;
+
+      if (player.hasDrawn) {
+        btn.setAttribute("aria-label", player.name + " has already drawn a colour");
+      } else if (poolEmpty) {
+        btn.setAttribute("aria-label", player.name + " — no colours remaining");
+      } else {
+        btn.setAttribute("aria-label", "Select " + player.name);
+      }
+
+      const avatar = document.createElement("span");
+      avatar.className = "player__avatar";
+      avatar.textContent = player.name.trim().charAt(0).toUpperCase() || "?";
+
+      const name = document.createElement("span");
+      name.className = "player__name";
+      name.textContent = player.name;
+
+      const stateLabel = document.createElement("span");
+      stateLabel.className = "player__state";
+      stateLabel.textContent = player.hasDrawn ? "Drawn ✓" : (isSelected ? "Selected" : "Ready");
+
+      btn.appendChild(avatar);
+      btn.appendChild(name);
+      btn.appendChild(stateLabel);
+
+      btn.addEventListener("click", function () { selectPlayer(player.id); });
+
+      playerGrid.appendChild(btn);
+    });
+  }
+
+  function renderStatus() {
+    const total = state.players.length;
+    const done = state.drawnCount;
+    let message;
+    let isDone = false;
+
+    if (state.gameCompleted) {
+      message = "Frame complete. Game History is unlocked — tap View Game History to verify every colour, or reset to start a new session.";
+      isDone = true;
+    } else if (isFrameReadyToComplete()) {
+      message = "All players have finished drawing. Tap Mark Game Complete to lock the frame and unlock Game History.";
+      isDone = true;
+    } else if (state.pool.length === 0) {
+      message = "Every colour in the pool has been allocated. Tap Mark Game Complete to lock the frame.";
+      isDone = true;
+    } else if (!state.selectedId) {
+      message = "Pass the device to the next qualified player, then tap their name above.";
+    } else if (!state.confirmed) {
+      message = "Confirm qualification below to unlock your private draw.";
+    } else {
+      message = "Ready. Make sure the screen is turned away from the other players, then draw.";
+    }
+
+    statusLine.textContent = message;
+    statusLine.classList.toggle("status--done", isDone);
+    void total; void done;
+  }
+
+  function renderConfirmPanel() {
+    const player = state.players.find(function (p) { return p.id === state.selectedId; });
+
+    if (!player || player.hasDrawn || state.pool.length === 0 || state.activeReveal || state.gameCompleted) {
+      confirmPanel.hidden = true;
+      return;
+    }
+
+    confirmPanel.hidden = false;
+    confirmName.textContent = player.name;
+    confirmName2.textContent = player.name;
+    confirmBalls.textContent = state.requiredBalls +
+      (state.requiredBalls === 1 ? " ball" : " balls");
+
+    confirmCheck.checked = state.confirmed;
+    updateDrawButton();
+  }
+
+  function updateDrawButton() {
+    const player = state.players.find(function (p) { return p.id === state.selectedId; });
+    const canDraw =
+      !!player &&
+      !player.hasDrawn &&
+      state.confirmed &&
+      !state.drawing &&
+      !state.activeReveal &&
+      !state.gameCompleted &&
+      state.pool.length > 0;
+
+    drawBtn.disabled = !canDraw;
+  }
+
+  /**
+   * Two-step lock:
+   *   1. Mark Game Complete — enabled only when no further draws are possible.
+   *   2. View Game History   — enabled only after the frame is locked.
+   */
+  function renderActionButtons() {
+    const ready  = isFrameReadyToComplete();
+    const locked = state.gameCompleted;
+
+    /* Complete button */
+    completeBtn.disabled = !ready || locked;
+    completeBtn.classList.toggle("btn--gold", !locked);
+    completeBtn.classList.toggle("btn--ghost", locked);
+
+    if (locked) {
+      completeBtnLabel.textContent = "Game Complete ✓";
+      completeBtn.setAttribute("aria-label", "Game complete");
+    } else if (ready) {
+      completeBtnLabel.textContent = "Mark Game Complete";
+      completeBtn.setAttribute("aria-label", "Mark game complete — all players have drawn");
+    } else {
+      completeBtnLabel.textContent = "Mark Game Complete";
+      completeBtn.setAttribute(
+        "aria-label",
+        "Mark game complete — available after all players have drawn"
+      );
+    }
+
+    /* History button */
+    historyBtn.disabled = !locked;
+    historyBtn.setAttribute(
+      "aria-label",
+      locked
+        ? "View game history — frame is complete"
+        : "Game history — mark the game complete first"
+    );
+
+    /* Reset is always available, but never while a private colour is on screen */
+    resetBtn.disabled = !!state.activeReveal;
+  }
+
+  /* ============================================================
+     9. PLAYER SELECTION
+     ============================================================ */
+  function selectPlayer(playerId) {
+    if (state.activeReveal || state.gameCompleted) return;
+
+    const player = state.players.find(function (p) { return p.id === playerId; });
+    if (!player || player.hasDrawn) return;
+    if (state.pool.length === 0) return;
+
+    state.selectedId = playerId;
+    state.confirmed = false;
+    confirmCheck.checked = false;
+
+    renderGame();
+  }
+
+  /* ============================================================
+     10. DRAWING A COLOUR
+     ============================================================ */
+  function handleDraw() {
+    if (state.drawing || state.activeReveal || state.gameCompleted) return;
+    if (!state.confirmed) return;
+
+    const player = state.players.find(function (p) { return p.id === state.selectedId; });
+    if (!player || player.hasDrawn) return;
+    if (state.pool.length === 0) { renderGame(); return; }
+
+    state.drawing = true;
+    updateDrawButton();
+
+    /* Atomically select and remove a colour from the available pool. */
+    const index = secureRandomInt(state.pool.length);
+    const colourKey = state.pool.splice(index, 1)[0];
+
+    player.hasDrawn = true;
+    state.drawnCount += 1;
+    secretAssignments.set(player.id, colourKey);
+    state.drawOrder.push({ playerId: player.id, colourKey: colourKey });
+
+    state.activeReveal = { playerId: player.id, key: colourKey };
+
+    runRevealSequence(player, colourKey);
+  }
+
+  function runRevealSequence(player, colourKey) {
+    const token = ++state.revealToken;
+    const totalTicks = 13;
+    let ticks = 0;
+
+    revealPlayer.textContent = player.name + " · private draw";
+    revealName.textContent = "";
+    revealName.classList.remove("is-shown");
+    revealName.style.textShadow = "";
+    revealName.style.color = "";
+    revealShuffle.hidden = false;
+    revealNote.hidden = true;
+    hideBtn.hidden = true;
+
+    clearBall(revealBall);
+    revealBall.classList.add("is-shuffling");
+
+    overlay.hidden = false;
+    document.body.classList.add("no-scroll");
+    overlay.focus({ preventScroll: true });
+
+    const timer = setInterval(function () {
+      if (token !== state.revealToken) { clearInterval(timer); return; }
+
+      const decoy = COLOURS[secureRandomInt(COLOURS.length)];
+      paintBall(revealBall, decoy);
+
+      ticks += 1;
+      if (ticks >= totalTicks) {
+        clearInterval(timer);
+        finishReveal(token, colourKey);
+      }
+    }, 82);
+  }
+
+  function finishReveal(token, colourKey) {
+    if (token !== state.revealToken) return;
+
+    const colour = COLOUR_MAP[colourKey];
+    if (!colour) return;
+
+    paintBall(revealBall, colour);
+    revealBall.classList.remove("is-shuffling");
+    void revealBall.offsetWidth;
+    revealBall.classList.add("is-revealed");
+
+    revealShuffle.hidden = true;
+
+    revealName.textContent = colour.name.toUpperCase();
+    revealName.style.color = "#ffffff";
+    revealName.style.textShadow =
+      "0 0 26px " + colour.glow + ", 0 0 62px " + colour.glow;
+    revealName.classList.add("is-shown");
+
+    revealNote.hidden = false;
+    hideBtn.hidden = false;
+    hideBtn.focus({ preventScroll: true });
+
+    state.drawing = false;
+    updateDrawButton();
+  }
+
+  /* ============================================================
+     11. HIDING THE COLOUR
+     ============================================================ */
+  function hideReveal() {
+    if (!state.activeReveal) return;
+
+    state.revealToken += 1;
+    state.activeReveal = null;
+    state.selectedId = null;
+    state.confirmed = false;
+    state.drawing = false;
+    confirmCheck.checked = false;
+
+    overlay.hidden = true;
+    document.body.classList.remove("no-scroll");
+
+    revealPlayer.textContent = "";
+    revealName.textContent = "";
+    revealName.classList.remove("is-shown");
+    revealName.style.textShadow = "";
+    revealName.style.color = "";
+    revealShuffle.hidden = false;
+    revealNote.hidden = true;
+    hideBtn.hidden = true;
+    clearBall(revealBall);
+
+    renderGame();
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  /* ============================================================
+     12. GAME COMPLETE → GAME HISTORY
+     ============================================================ */
+  function requestComplete() {
+    if (!isFrameReadyToComplete() || state.gameCompleted) return;
+    completeModal.hidden = false;
+    completeConfirm.focus();
+  }
+
+  function confirmComplete() {
+    completeModal.hidden = true;
+    state.gameCompleted = true;
+    renderGame();
+  }
+
+  function openHistory() {
+    /* History is gated behind the explicit "Mark Game Complete" action. */
+    if (!state.gameCompleted) return;
+
+    const total = state.players.length;
+    const drawn = state.drawOrder.length;
+
+    historySub.textContent =
+      drawn + " of " + total + " player" + (total === 1 ? "" : "s") +
+      " drew a colour this frame.";
+
+    historyList.innerHTML = "";
+
+    /* Drawn players, in the order they drew. */
+    state.drawOrder.forEach(function (entry, index) {
+      const player = state.players.find(function (p) { return p.id === entry.playerId; });
+      if (!player) return;
+
+      const colour = COLOUR_MAP[entry.colourKey];
+      historyList.appendChild(buildHistoryRow({
+        index: index + 1,
+        name: player.name,
+        colour: colour
+      }));
+    });
+
+    /* Players who never drew (only possible if the pool ran dry). */
+    state.players
+      .filter(function (p) { return !p.hasDrawn; })
+      .forEach(function (player) {
+        historyList.appendChild(buildHistoryRow({
+          index: null,
+          name: player.name,
+          colour: null
+        }));
+      });
+
+    historyModal.hidden = false;
+    historyClose.focus({ preventScroll: true });
+  }
+
+  function buildHistoryRow(opts) {
+    const li = document.createElement("li");
+    li.className = "history__item";
+
+    const idx = document.createElement("span");
+    idx.className = "history__index";
+    idx.textContent = opts.index !== null ? String(opts.index) : "–";
+    idx.setAttribute("aria-hidden", "true");
+    li.appendChild(idx);
+
+    const ball = document.createElement("span");
+    ball.className = "history__ball";
+    ball.setAttribute("aria-hidden", "true");
+    ball.style.background = opts.colour
+      ? ballGradient(opts.colour)
+      : "radial-gradient(circle at 34% 28%, #4a4a4a, #1a1a1a 55%, #000)";
+    li.appendChild(ball);
+
+    const name = document.createElement("span");
+    name.className = "history__name";
+    name.textContent = opts.name;
+    li.appendChild(name);
+
+    const colourLabel = document.createElement("span");
+    colourLabel.className = "history__colour";
+    if (opts.colour) {
+      colourLabel.textContent = opts.colour.name;
+    } else {
+      colourLabel.textContent = "Not drawn";
+      colourLabel.classList.add("history__colour--none");
+    }
+    li.appendChild(colourLabel);
+
+    return li;
+  }
+
+  function closeHistory() {
+    historyModal.hidden = true;
+    historyBtn.focus({ preventScroll: true });
+  }
+
+  /* ============================================================
+     13. EVENT WIRING
+     ============================================================ */
+  decPlayers.addEventListener("click", function () {
+    if (state.setupCount <= MIN_PLAYERS) return;
+    state.setupCount -= 1;
+    buildNameInputs();
+    hideSetupAlert();
+    updateSetupSummary();
+  });
+
+  incPlayers.addEventListener("click", function () {
+    if (state.setupCount >= MAX_PLAYERS) return;
+    state.setupCount += 1;
+    buildNameInputs();
+    hideSetupAlert();
+    updateSetupSummary();
+  });
+
+  decBalls.addEventListener("click", function () {
+    if (state.requiredBalls <= MIN_BALLS) return;
+    state.requiredBalls -= 1;
+    updateSetupSummary();
+  });
+
+  incBalls.addEventListener("click", function () {
+    if (state.requiredBalls >= MAX_BALLS) return;
+    state.requiredBalls += 1;
+    updateSetupSummary();
+  });
+
+  startBtn.addEventListener("click", startGame);
+
+  confirmCheck.addEventListener("change", function () {
+    state.confirmed = confirmCheck.checked;
+    updateDrawButton();
+    renderStatus();
+  });
+
+  drawBtn.addEventListener("click", handleDraw);
+  hideBtn.addEventListener("click", hideReveal);
+
+  completeBtn.addEventListener("click", requestComplete);
+  completeCancel.addEventListener("click", function () { completeModal.hidden = true; });
+  completeConfirm.addEventListener("click", confirmComplete);
+
+  historyBtn.addEventListener("click", openHistory);
+  historyClose.addEventListener("click", closeHistory);
+
+  resetBtn.addEventListener("click", requestReset);
+  modalCancel.addEventListener("click", function () { modal.hidden = true; });
+  modalConfirm.addEventListener("click", performReset);
+
+  /* Escape closes the topmost non-private panel only — never the reveal. */
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    if (!historyModal.hidden)  { historyModal.hidden = true; return; }
+    if (!completeModal.hidden) { completeModal.hidden = true; return; }
+    if (!modal.hidden)         { modal.hidden = true; }
+  });
+
+  /* ============================================================
+     14. BOOT
+     ============================================================ */
+  buildNameInputs();
+  buildPoolChips();
+  updateSetupSummary();
+  clearBall(revealBall);
+})();
+</script>
+</body>
+</html>
